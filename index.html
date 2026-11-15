@@ -1,241 +1,338 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portfolio | Joaquin Sanz</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracker anime / manga</title>
+<style>
+  :root { --bg:#14161a; --card:#1d2026; --line:#2a2e36; --text:#e6e6e6; --muted:#8a8f98; --accent:#6ea8fe; --warn:#f5b041; --ok:#58d68d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  header { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: 1rem; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  h1 { font-size: 1.1rem; margin: 0 auto 0 0; }
+  button, select, input { font: inherit; color: inherit; background: var(--card); border: 1px solid #333842; border-radius: 6px; padding: .4rem .6rem; }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  th, td { padding: .5rem .75rem; text-align: left; border-bottom: 1px solid #23262d; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: .85rem; }
+  td.nombre { white-space: normal; font-weight: 500; }
+  .pend { color: var(--warn); font-weight: 600; }
+  .ok { color: var(--ok); }
+  .muted { color: var(--muted); }
+  .acciones button { padding: .2rem .5rem; }
+  dialog { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 10px; width: min(420px, 92vw); }
+  dialog::backdrop { background: #000a; }
+  dialog form { display: grid; gap: .6rem; }
+  dialog label { display: grid; gap: .2rem; font-size: .85rem; color: var(--muted); }
+  .fila { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  #toasts { position: fixed; right: 1rem; bottom: 1rem; display: grid; gap: .5rem; }
+  .toast { background: var(--card); border-left: 4px solid var(--accent); padding: .6rem .9rem; border-radius: 6px; box-shadow: 0 4px 14px #0008; }
+</style>
 </head>
 <body>
 
-  <!-- ===== NAVBAR ===== -->
-  <header class="navbar">
-    <div class="container nav-inner">
-      <a href="#" class="logo">Joaquin Sanz</a>
-      <nav>
-        <ul class="nav-links">
-          <li><a href="#sobre-mi">Sobre mí</a></li>
-          <li><a href="#proyectos">Proyectos</a></li>
-          <li><a href="#habilidades">Habilidades</a></li>
-          <li><a href="#contacto">Contacto</a></li>
-        </ul>
-      </nav>
-      <button class="menu-toggle" aria-label="Abrir menú">&#9776;</button>
+<header>
+  <h1>📺 Tracker anime / manga</h1>
+  <select id="filtroTipo"></select>
+  <select id="filtroEstado">
+    <option value="todos">Todos</option>
+    <option value="emision" selected>En emisión</option>
+    <option value="pendientes">Con caps por leer</option>
+    <option value="cerrados">Finalizados / Hiatus</option>
+  </select>
+  <button id="btnNuevo">+ Añadir</button>
+  <button id="btnNotif">🔔 Activar avisos</button>
+  <button id="btnExportar" title="Descargar copia de seguridad">⬇ Exportar</button>
+  <label><button type="button" onclick="this.nextElementSibling.click()">⬆ Importar</button><input id="inputImportar" type="file" accept=".json" hidden></label>
+</header>
+
+<div class="wrap">
+  <table>
+    <thead><tr><th>Nombre</th><th>Tipo</th><th>Vistos / Publ.</th><th>Por leer</th><th>Próximo cap.</th><th>Frecuencia</th><th>Nota</th><th></th></tr></thead>
+    <tbody id="tabla"></tbody>
+  </table>
+</div>
+
+<dialog id="dialogo">
+  <form method="dialog" id="formulario">
+    <label>Nombre <input name="nombre" required></label>
+    <div class="fila">
+      <label>Tipo <select name="tipo"></select></label>
+      <label>Estado <select name="estado"></select></label>
     </div>
-  </header>
-
-  <!-- ===== HERO ===== -->
-  <section class="hero" id="inicio">
-    <div class="container hero-content">
-      <p class="hero-sub">Hola, soy</p>
-      <h1 class="hero-title">Joaquin Sanz</h1>
-      <p class="hero-role">Desarrollador Web <span class="accent" id="typed-role"></span></p>
-      <div class="hero-cta">
-        <a href="#proyectos" class="btn btn-primary">Ver proyectos</a>
-        <a href="#contacto" class="btn btn-outline">Contactar</a>
-      </div>
+    <div class="fila">
+      <label>Publicados <input name="publicados" type="number" min="0" value="0"></label>
+      <label>Vistos / leídos <input name="vistos" type="number" min="0" value="0"></label>
     </div>
-  </section>
-
-  <!-- ===== SOBRE MÍ ===== -->
-  <section class="section" id="sobre-mi">
-    <div class="container">
-      <h2 class="section-title">Sobre mí</h2>
-      <div class="about-grid">
-        <div class="about-text">
-          <p>
-            Soy un desarrollador web apasionado por crear experiencias digitales
-            limpias y funcionales. Me especializo en el desarrollo front-end y back-end,
-            buscando siempre soluciones elegantes a problemas complejos.
-          </p>
-          <p>
-            Cuando no estoy programando, me gusta aprender nuevas tecnologías y
-            contribuir a proyectos de código abierto.
-          </p>
-          <a href="#" class="btn btn-primary" download>Descargar CV</a>
-        </div>
-        <div class="about-stats">
-          <div class="stat">
-            <span class="stat-number" data-target="10">0</span>
-            <span class="stat-label">Proyectos</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number" data-target="3">0</span>
-            <span class="stat-label">Años de experiencia</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number" data-target="8">0</span>
-            <span class="stat-label">Tecnologías</span>
-          </div>
-        </div>
-      </div>
+    <div class="fila">
+      <label>Próximo capítulo <input name="proximo" type="date"></label>
+      <label>Frecuencia <select name="frecuencia"></select></label>
     </div>
-  </section>
-
-  <!-- ===== PROYECTOS ===== -->
-  <section class="section section-alt" id="proyectos">
-    <div class="container">
-      <h2 class="section-title">Proyectos</h2>
-      <div class="projects-grid">
-
-        <article class="card">
-          <div class="card-header">
-            <span class="card-icon">&#128187;</span>
-            <div class="card-links">
-              <a href="#" aria-label="Código fuente">&#60;/&#62;</a>
-              <a href="#" aria-label="Demo en vivo">&#8599;</a>
-            </div>
-          </div>
-          <h3 class="card-title">Nombre del Proyecto</h3>
-          <p class="card-desc">Descripción breve del proyecto. Qué problema resuelve y qué tecnologías usaste.</p>
-          <div class="card-tags">
-            <span class="tag">HTML</span>
-            <span class="tag">CSS</span>
-            <span class="tag">JavaScript</span>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <span class="card-icon">&#128202;</span>
-            <div class="card-links">
-              <a href="#" aria-label="Código fuente">&#60;/&#62;</a>
-              <a href="#" aria-label="Demo en vivo">&#8599;</a>
-            </div>
-          </div>
-          <h3 class="card-title">Nombre del Proyecto</h3>
-          <p class="card-desc">Descripción breve del proyecto. Qué problema resuelve y qué tecnologías usaste.</p>
-          <div class="card-tags">
-            <span class="tag">React</span>
-            <span class="tag">Node.js</span>
-            <span class="tag">MongoDB</span>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <span class="card-icon">&#127760;</span>
-            <div class="card-links">
-              <a href="#" aria-label="Código fuente">&#60;/&#62;</a>
-              <a href="#" aria-label="Demo en vivo">&#8599;</a>
-            </div>
-          </div>
-          <h3 class="card-title">Nombre del Proyecto</h3>
-          <p class="card-desc">Descripción breve del proyecto. Qué problema resuelve y qué tecnologías usaste.</p>
-          <div class="card-tags">
-            <span class="tag">Python</span>
-            <span class="tag">Django</span>
-            <span class="tag">SQL</span>
-          </div>
-        </article>
-
-      </div>
+    <div class="fila">
+      <label>Nota (0-10) <input name="calificacion" type="number" min="0" max="10" step="0.5"></label>
+      <label>Plataforma <input name="plataforma" placeholder="Streaming, Físico..."></label>
     </div>
-  </section>
-
-  <!-- ===== HABILIDADES ===== -->
-  <section class="section" id="habilidades">
-    <div class="container">
-      <h2 class="section-title">Habilidades</h2>
-      <div class="skills-grid">
-
-        <div class="skill-group">
-          <h3 class="skill-group-title">Front-end</h3>
-          <ul class="skill-list">
-            <li class="skill-item">
-              <span class="skill-name">HTML / CSS</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="90"></div></div>
-            </li>
-            <li class="skill-item">
-              <span class="skill-name">JavaScript</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="80"></div></div>
-            </li>
-            <li class="skill-item">
-              <span class="skill-name">React</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="70"></div></div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="skill-group">
-          <h3 class="skill-group-title">Back-end</h3>
-          <ul class="skill-list">
-            <li class="skill-item">
-              <span class="skill-name">Node.js</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="75"></div></div>
-            </li>
-            <li class="skill-item">
-              <span class="skill-name">Python</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="65"></div></div>
-            </li>
-            <li class="skill-item">
-              <span class="skill-name">SQL</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="70"></div></div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="skill-group">
-          <h3 class="skill-group-title">Herramientas</h3>
-          <ul class="skill-list">
-            <li class="skill-item">
-              <span class="skill-name">Git / GitHub</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="85"></div></div>
-            </li>
-            <li class="skill-item">
-              <span class="skill-name">Docker</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="55"></div></div>
-            </li>
-            <li class="skill-item">
-              <span class="skill-name">Figma</span>
-              <div class="skill-bar"><div class="skill-fill" data-width="60"></div></div>
-            </li>
-          </ul>
-        </div>
-
-      </div>
+    <label>Notas <input name="notas"></label>
+    <div class="fila">
+      <button value="cancelar" formnovalidate>Cancelar</button>
+      <button value="guardar">Guardar</button>
     </div>
-  </section>
+  </form>
+</dialog>
 
-  <!-- ===== CONTACTO ===== -->
-  <section class="section section-alt" id="contacto">
-    <div class="container contact-wrapper">
-      <h2 class="section-title">Contacto</h2>
-      <p class="contact-sub">¿Tienes un proyecto en mente? Hablemos.</p>
+<div id="toasts"></div>
 
-      <form class="contact-form" id="contact-form" novalidate>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required />
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="tu@email.com" required />
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="mensaje">Mensaje</label>
-          <textarea id="mensaje" name="mensaje" rows="5" placeholder="Cuéntame sobre tu proyecto..." required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Enviar mensaje</button>
-        <p class="form-status" id="form-status"></p>
-      </form>
+<script>
+const STORAGE_KEY = 'tracker-items';
+const TIPOS = ['Anime', 'Manga', 'Manhwa/Webtoon', 'Comic', 'Serie', 'Pelicula', 'Álbum', 'Libro', 'Videojuego'];
+const ESTADOS = ['En emisión', 'Finalizado', 'Hiatus'];
+const FRECUENCIAS = { 'Semanal': 7, 'Quincenal': 14, 'Mensual': 'mes', 'Indeterminada': null };
 
-      <div class="social-links">
-        <a href="#" class="social-link" aria-label="GitHub">GitHub</a>
-        <a href="#" class="social-link" aria-label="LinkedIn">LinkedIn</a>
-      </div>
-    </div>
-  </section>
+// Datos iniciales sacados de la hoja "al dia" (solo se cargan la primera vez)
+const DATOS_INICIALES = [
+  ['Nightwing', 'Comic', 144, 141, '2026-12-11', 'En emisión', 'Mensual'],
+  ['Kagurabachi', 'Manga', 139, 136, '2026-11-22', 'En emisión', 'Semanal'],
+  ['Shuumatsu no Valkyrie', 'Manga', 126, 124, '2026-11-16', 'En emisión', 'Mensual'],
+  ['Absolute Superman', 'Comic', 24, 23, '2026-12-01', 'En emisión', 'Mensual'],
+  ['Kouiu no Ga Ii', 'Manga', 54, 53, '2026-12-03', 'En emisión', 'Mensual'],
+  ['MAD', 'Manga', 57, 56, '2026-11-19', 'En emisión', 'Quincenal'],
+  ["Jojo's Bizarre Adventure: Steel Ball Run", 'Anime', 9, 9, '2026-11-20', 'En emisión', 'Indeterminada'],
+  ['La Nobleza de las Flores', 'Manga', 207, 206, '2026-11-19', 'En emisión', 'Semanal'],
+  ['Marriage X Toxin', 'Manga', 186, 185, '2026-11-17', 'En emisión', 'Semanal'],
+  ['Boyish Kanojo ga Kawaisugiru', 'Manga', 54, 53, '2026-11-19', 'En emisión', 'Semanal'],
+  ['Tonari no Seki...', 'Manga', 118, 117, '2026-11-22', 'En emisión', 'Indeterminada'],
+  ['Ichi el Brujo', 'Manga', 106, 106, '2026-11-22', 'En emisión', 'Semanal'],
+  ['Boruto Two: Blue Vortex', 'Manga', 39, 38, '2026-11-16', 'En emisión', 'Mensual'],
+  ['Blue Exorcist (desde el 120)', 'Manga', 171, 171, '2026-12-01', 'En emisión', 'Indeterminada'],
+  ['Spy x Family', 'Manga', 143, 143, '2026-11-22', 'En emisión', 'Quincenal'],
+  ['Absolute Batman', 'Comic', 24, 24, '2026-12-11', 'En emisión', 'Mensual'],
+  ['Batman Vol. 4', 'Comic', 14, 14, '2026-12-01', 'En emisión', 'Mensual'],
+  ['Osanajimi Wo Miru', 'Manga', 17, 17, '', 'En emisión', 'Indeterminada'],
+  ['Hitoner', 'Manga', 15, 15, '2026-11-17', 'En emisión', 'Quincenal'],
+  ['Ruri Dragon', 'Manga', 53, 53, '', 'En emisión', 'Quincenal'],
+  ['Bleach TYBW Cour 4', 'Anime', 9, 9, '2026-10-26', 'En emisión', 'Semanal'],
+  ["Singles mother's last love was a bag", 'Manga', 61, 61, '', 'En emisión', 'Indeterminada'],
+  ['Super no Ura', 'Anime', 12, 12, '', 'Finalizado', 'Indeterminada'],
+  ['Akane Banashi', 'Anime', 12, 12, '', 'Finalizado', 'Indeterminada'],
+  ['Shingeki no Eroko-san', 'Manga', 63, 63, '', 'Finalizado', 'Indeterminada'],
+  ['The Amazing Digital Circus', 'Serie', 9, 9, '', 'Finalizado', 'Indeterminada'],
+  ['Witch Hat Atelier', 'Anime', 13, 13, '', 'Finalizado', 'Indeterminada'],
+  ['Dorohedoro S2', 'Anime', 11, 11, '', 'Finalizado', 'Indeterminada'],
+  ['Invincible S4', 'Serie', 8, 8, '', 'Finalizado', 'Indeterminada'],
+  ['Black Clover', 'Manga', 392, 392, '', 'Finalizado', 'Indeterminada'],
+  ['Mis Aventuras con Superman S3', 'Serie', 10, 10, '', 'Finalizado', 'Indeterminada'],
+  ['Epifora', 'Manhwa/Webtoon', 10, 10, '', 'Hiatus', 'Semanal'],
+  ['Raise Wa Tanin Ga Ii', 'Manga', 38, 38, '', 'Hiatus', 'Indeterminada'],
+].map(([nombre, tipo, publicados, vistos, proximo, estado, frecuencia]) =>
+  ({ id: crypto.randomUUID(), nombre, tipo, publicados, vistos, proximo, estado, frecuencia }));
 
-  <!-- ===== FOOTER ===== -->
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; <span id="year"></span> Joaquin Sanz.</p>
-    </div>
-  </footer>
+let items = cargar();
+let idEditando = null;
 
-  <script src="main.js"></script>
+// ---------- Persistencia ----------
+function cargar() {
+  const guardado = localStorage.getItem(STORAGE_KEY);
+  return guardado ? JSON.parse(guardado) : DATOS_INICIALES;
+}
+function guardar() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+// ---------- Fechas (formato YYYY-MM-DD, hora local) ----------
+function aISO(fecha) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}`;
+}
+function hoyISO() { return aISO(new Date()); }
+function siguienteFecha(iso, frecuencia) {
+  const paso = FRECUENCIAS[frecuencia];
+  if (!paso) return '';                       // indeterminada: hay que ponerla a mano
+  const [y, m, d] = iso.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  if (paso === 'mes') fecha.setMonth(fecha.getMonth() + 1);
+  else fecha.setDate(fecha.getDate() + paso);
+  return aISO(fecha);
+}
+function formatearFecha(iso) {
+  if (!iso) return '<span class="muted">—</span>';
+  const [y, m, d] = iso.split('-');
+  return iso === hoyISO() ? '<b>Hoy</b>' : `${d}/${m}/${y.slice(2)}`;
+}
+
+// ---------- Comprobación de nuevos capítulos ----------
+function revisarSalidas() {
+  const hoy = hoyISO();
+  let huboCambios = false;
+  for (const item of items) {
+    if (item.estado !== 'En emisión') continue;
+    let nuevos = 0;
+    while (item.proximo && item.proximo <= hoy && nuevos < 60) {
+      item.publicados++;
+      nuevos++;
+      item.proximo = siguienteFecha(item.proximo, item.frecuencia);
+    }
+    if (nuevos > 0) {
+      huboCambios = true;
+      avisar(`Nuevo capítulo: ${item.nombre}`,
+        nuevos === 1 ? `Salió el #${item.publicados}` : `Salieron ${nuevos} capítulos (hasta el #${item.publicados})`);
+    }
+  }
+  if (huboCambios) { guardar(); render(); }
+}
+
+function avisar(titulo, cuerpo) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification(titulo, { body: cuerpo }); }
+    catch { /* Chrome en Android no deja crear notificaciones así: queda el aviso en pantalla */ }
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<b>${escapar(titulo)}</b><br><span class="muted">${escapar(cuerpo)}</span>`;
+  document.getElementById('toasts').append(toast);
+  setTimeout(() => toast.remove(), 8000);
+}
+
+// ---------- Render ----------
+function escapar(texto) {
+  return String(texto).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function render() {
+  const tipo = document.getElementById('filtroTipo').value;
+  const vista = document.getElementById('filtroEstado').value;
+
+  const visibles = items
+    .filter(i => tipo === 'todos' || i.tipo === tipo)
+    .filter(i => vista === 'todos'
+      || (vista === 'emision' && i.estado === 'En emisión')
+      || (vista === 'pendientes' && i.publicados > i.vistos)
+      || (vista === 'cerrados' && i.estado !== 'En emisión'))
+    .sort((a, b) =>
+      (b.publicados - b.vistos) - (a.publicados - a.vistos)
+      || (a.proximo || '9999').localeCompare(b.proximo || '9999')
+      || a.nombre.localeCompare(b.nombre));
+
+  document.getElementById('tabla').innerHTML = visibles.map(i => {
+    const porLeer = i.publicados - i.vistos;
+    return `<tr>
+      <td class="nombre">${escapar(i.nombre)}${i.notas ? `<br><small class="muted">${escapar(i.notas)}</small>` : ''}</td>
+      <td class="muted">${escapar(i.tipo)}</td>
+      <td>${i.vistos} / ${i.publicados}</td>
+      <td class="${porLeer > 0 ? 'pend' : 'ok'}">${porLeer > 0 ? porLeer : '✓ Al día'}</td>
+      <td>${i.estado === 'En emisión' ? formatearFecha(i.proximo) : `<span class="muted">${i.estado}</span>`}</td>
+      <td class="muted">${i.estado === 'En emisión' ? escapar(i.frecuencia) : ''}</td>
+      <td>${i.calificacion ?? '<span class="muted">—</span>'}</td>
+      <td class="acciones">
+        <button data-accion="visto" data-id="${i.id}" title="Marcar uno como visto" ${porLeer > 0 ? '' : 'disabled'}>+1</button>
+        <button data-accion="editar" data-id="${i.id}" title="Editar">✎</button>
+        <button data-accion="borrar" data-id="${i.id}" title="Borrar">✕</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="muted">Nada por acá.</td></tr>';
+}
+
+// ---------- Formulario ----------
+const dialogo = document.getElementById('dialogo');
+const formulario = document.getElementById('formulario');
+
+function rellenarSelect(select, opciones) {
+  select.innerHTML = opciones.map(o => `<option value="${o}">${o}</option>`).join('');
+}
+
+function abrirFormulario(item) {
+  idEditando = item?.id ?? null;
+  formulario.reset();
+  const datos = item ?? { tipo: 'Manga', estado: 'En emisión', frecuencia: 'Semanal' };
+  for (const [campo, valor] of Object.entries(datos)) {
+    if (formulario.elements[campo]) formulario.elements[campo].value = valor ?? '';
+  }
+  dialogo.showModal();
+}
+
+dialogo.addEventListener('close', () => {
+  if (dialogo.returnValue !== 'guardar') return;
+  const f = formulario.elements;
+  const datos = {
+    nombre: f.nombre.value.trim(),
+    tipo: f.tipo.value,
+    estado: f.estado.value,
+    publicados: Number(f.publicados.value) || 0,
+    vistos: Number(f.vistos.value) || 0,
+    proximo: f.proximo.value,
+    frecuencia: f.frecuencia.value,
+    calificacion: f.calificacion.value === '' ? null : Number(f.calificacion.value),
+    plataforma: f.plataforma.value.trim(),
+    notas: f.notas.value.trim(),
+  };
+  if (idEditando) Object.assign(items.find(i => i.id === idEditando), datos);
+  else items.push({ id: crypto.randomUUID(), ...datos });
+  guardar();
+  revisarSalidas();
+  render();
+});
+
+// ---------- Eventos ----------
+document.getElementById('tabla').addEventListener('click', e => {
+  const boton = e.target.closest('button');
+  if (!boton) return;
+  const item = items.find(i => i.id === boton.dataset.id);
+  if (boton.dataset.accion === 'visto') item.vistos = Math.min(item.vistos + 1, item.publicados);
+  if (boton.dataset.accion === 'editar') return abrirFormulario(item);
+  if (boton.dataset.accion === 'borrar' && confirm(`¿Borrar "${item.nombre}"?`)) items = items.filter(i => i !== item);
+  guardar();
+  render();
+});
+
+document.getElementById('btnNuevo').onclick = () => abrirFormulario(null);
+document.getElementById('filtroTipo').onchange = render;
+document.getElementById('filtroEstado').onchange = render;
+
+const btnNotif = document.getElementById('btnNotif');
+function actualizarBotonNotif() {
+  if (!('Notification' in window)) { btnNotif.textContent = '🔕 Sin soporte'; btnNotif.disabled = true; return; }
+  const estado = Notification.permission;
+  btnNotif.textContent = estado === 'granted' ? '🔔 Avisos activos' : estado === 'denied' ? '🔕 Avisos bloqueados' : '🔔 Activar avisos';
+  btnNotif.disabled = estado !== 'default';
+}
+btnNotif.onclick = async () => { await Notification.requestPermission(); actualizarBotonNotif(); };
+
+document.getElementById('btnExportar').onclick = () => {
+  const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+  const enlace = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `tracker-${hoyISO()}.json` });
+  enlace.click();
+  URL.revokeObjectURL(enlace.href);
+};
+
+document.getElementById('inputImportar').onchange = async e => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+  try {
+    // Suma lo que no esté ya (mismo nombre + tipo); no pisa lo que tenés
+    const clave = i => i.nombre.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '') + '|' + i.tipo;
+    const existentes = new Set(items.map(clave));
+    const nuevos = JSON.parse(await archivo.text()).filter(i => !existentes.has(clave(i)));
+    items.push(...nuevos.map(i => ({ ...i, id: i.id ?? crypto.randomUUID() })));
+    guardar();
+    revisarSalidas();
+    render();
+    avisar('Importado', `${nuevos.length} títulos nuevos añadidos`);
+  } catch { alert('Ese archivo no es un JSON válido.'); }
+  e.target.value = '';
+};
+
+// ---------- Inicio ----------
+rellenarSelect(document.getElementById('filtroTipo'), ['todos', ...TIPOS]);
+document.getElementById('filtroTipo').options[0].textContent = 'Todos los tipos';
+rellenarSelect(formulario.elements.tipo, TIPOS);
+rellenarSelect(formulario.elements.estado, ESTADOS);
+rellenarSelect(formulario.elements.frecuencia, Object.keys(FRECUENCIAS));
+actualizarBotonNotif();
+guardar();
+render();
+revisarSalidas();
+setInterval(revisarSalidas, 10 * 60 * 1000);   // vuelve a mirar cada 10 min mientras la pestaña esté abierta
+</script>
 </body>
 </html>
